@@ -12,6 +12,7 @@ public class SpTestApplication extends SpringBootServletInitializer {
 		return builder.sources(new Class[] { getClass() });
 	}
 
+	
 	public static void main(String[] args) {
 		SpringApplication.run(SpTestApplication.class, args);
 	}
