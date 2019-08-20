@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>goods.html</title>
+<meta name="keywords" content="keyword1,keyword2,keyword3">
+<meta name="description" content="this is my page">
+<meta name="content-type" content="text/html; charset=UTF-8">
+<script src="/static/layui/layui.js"></script>
+<script src="/static/jquery/jquery-2.1.0.js"></script>
+<link rel="stylesheet" href="/static/layui/css/layui.css">
+</head>
+<body>
+	<button type="button" class="layui-btn" id="add">添加商品</button>
+	<!--<button type="button" class="layui-btn" id="query">查询</button>-->
+	<table class="layui-hide" id="goodsTable" lay-filter="goodsTable" ></table>
+	<!--商品-->
+	<div id="search_this" lay-filter="search_this" style="display: none;" class="layui-form layui-form-pane">
+	    <div class="layui-form-item">
+	        <label class="layui-form-label">商品名称*</label>
+	        <div class="layui-input-block">
+	            <input type="text" id="goods_name" name="title" autocomplete="off" class="layui-input">
+	        </div>
+	    </div>
+	    <div class="layui-form-item">
+	        <label class="layui-form-label">商品描述</label>
+	        <div class="layui-input-block">
+	            <input type="text" id="goods_desc" name="title" autocomplete="off" class="layui-input">
+	        </div>
+	    </div>
+	    <div class="layui-form-item">
+	        <label class="layui-form-label">商品价格*</label>
+	        <div class="layui-input-block">
+	            <input type="text" id="goods_price" required rename="title" autocomplete="off" class="layui-input" >
+	        </div>
+	    </div>
+	    <div class="layui-form-item" id="dis_psd">
+	        <label class="layui-form-label">商品类型*</label>
+	        <div class="layui-input-block">
+	            <input type="text" id="goods_type" name="title" autocomplete="off" class="layui-input" value="经济科学出版社" >
+	        </div>
+	    </div>
+	    <div class="layui-inline" id="brand_show">
+			<label class="layui-form-label">设置状态*</label>
+			<div class="layui-input-inline">
+				<select name="userkw" lay-filter="all_brand" id="goods_status">
+					<option value="1">上线</option>
+					<option value="0">下线</option>
+				</select>
+			</div>
+		</div>
+	</div>
+	<script type="text/html" id="barDemo">
+  		<a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+  		<a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+	</script>
+</body>
+<script type="text/javascript" th:inline="none">
+	layui.use(['form','table','layer'], function(){
+	  var form = layui.form;
+	  var table = layui.table;
+	  var layer = layui.layer;
+	  inittable();
+	  	
+	  	//添加商品
+	  	 $("#add").click(function(){
+	  	 	 $("#goods_name").val("");
+		     $("#goods_desc").val("");
+		     $("#goods_price").val("");
+		     form.render();
+	  	 	var index= layer.open({
+                type: 1
+                , title: '添加'
+                , area: ['500px', '420px']
+                , shade: 0.1
+                ,btn: ['确定添加', '取消']
+				  ,yes: function(index, layero){
+				     var goodsname=$("#goods_name").val();
+				     var goodsdec=$("#goods_desc").val();
+				     var goodsprice=$("#goods_price").val();
+				     var goodstype=$("#goods_type").val();
+					 var status=$("#goods_status").val();
+
+					 if(goodsname==""||goodsdec==""||goodsprice==""||goodstype==""){
+					 	alert("商品信息请输入完整！");
+					 	return;
+					 }
+					 if(isNaN(goodsprice)){
+					 	alert("商品价格必须为数字！");
+					 	 return
+					 }
+					 var formdata=new FormData();
+					 formdata.append("goodsname",goodsname);
+					 formdata.append("goodsdec",goodsdec);
+					 formdata.append("goodsprice",goodsprice);
+					 formdata.append("goodstype",goodstype);
+					 formdata.append("status",status);
+					 $.ajax({
+		                url:'/api/goods/addgoods',
+		                type:'POST',
+		                data:formdata,
+		                processData:false,
+		                contentType: false, 
+		                success:function (data) {
+		                	alert("添加成功");
+		                	inittable();
+		                    layer.close(index);
+		                }
+		            })
+				  }
+                , maxmin: true
+                , offset: [100, 350]
+                , content: $("#search_this")
+                , cancel: function () {
+					layer.close(index);
+                }
+
+            });
+	  	 });
+	  	 //
+	  	 //监听工具条
+			table.on('tool(goodsTable)', function(obj){ //注：tool是工具条事件名，test是table原始容器的属性 lay-filter="对应的值"
+			  var data = obj.data; //获得当前行数据
+			  var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+			  var tr = obj.tr; //获得当前行 tr 的DOM对象
+			 
+			  if(layEvent === 'detail'){ //查看
+					
+			  } else if(layEvent === 'del'){ //删除
+			    layer.confirm('真的删除行么', function(index){
+			   		 var formdata=new FormData();
+					 formdata.append("id",data.id);
+			    	 $.ajax({
+		                url:'/api/goods/deletegoods',
+		                type:'POST',
+		                data:formdata,
+		                processData:false,
+		                contentType: false, 
+		                success:function (data) {
+		                	alert("成功");
+		                	obj.del();
+		                	layer.close(index);
+		                }
+		            })
+			    });
+			  } else if(layEvent === 'edit'){ //编辑
+					 $("#goods_name").val(data.goodsname);
+				     $("#goods_desc").val(data.goodsdec);
+				     $("#goods_price").val(data.goodsprice);
+				     $("#goods_type").val(data.goodstype);
+					 $("#goods_status").val(data.status);
+					 form.render();
+					 var index= layer.open({
+		                type: 1
+		                , title: '编辑'
+		                , area: ['500px', '420px']
+		                , shade: 0.1
+		                ,btn: ['确定', '取消']
+						  ,yes: function(index, layero){
+						     var goodsname=$("#goods_name").val();
+						     var goodsdec=$("#goods_desc").val();
+						     var goodsprice=$("#goods_price").val();
+						     var goodstype=$("#goods_type").val();
+							 var status=$("#goods_status").val();
+							 if(goodsname==""||goodsdec==""||goodsprice==""||goodstype==""){
+							 	alert("商品信息请输入完整！");
+							 	return;
+							 }
+							 if(isNaN(goodsprice)){
+							 	alert("商品价格必须为数字！");
+							 	 return
+							 }
+							 var formdata=new FormData();
+							 formdata.append("id",data.id);
+							 formdata.append("goodsname",goodsname);
+							 formdata.append("goodsdec",goodsdec);
+							 formdata.append("goodsprice",goodsprice);
+							 formdata.append("goodstype",goodstype);
+							 formdata.append("status",status);
+							 $.ajax({
+				                url:'/api/goods/updategoods',
+				                type:'POST',
+				                data:formdata,
+				                processData:false,
+				                contentType: false, 
+				                success:function (data) {
+				                	alert("成功");
+				                	inittable();
+				                    layer.close(index);
+				                }
+				            })
+						  }
+		                , maxmin: true
+		                , offset: [100, 350]
+		                , content: $("#search_this")
+		                , cancel: function () {
+							layer.close(index);
+		                }
+		
+		            });
+			  }
+			});
+	  	 //初始化表格
+	  	 function inittable(){
+		  	 	//渲染表格
+			  table.render({
+			    elem: '#goodsTable'
+			    ,height: 312
+			    ,url: '/api/goods/getAllGoods' //数据接口
+			    ,page: true //开启分页
+			    ,cols: [[ //表头
+			    {type: 'checkbox', fixed: 'left'},
+			      {field: 'goodsname', title: '商品名称', width:230}
+			      ,{field: 'goodsdec', title: '商品描述', width:230}
+			      ,{field: 'goodsprice', title: '商品价格', width:80} 
+			      ,{field: 'goodstype', title: '商品类型', width: 180}
+			      ,{field:'status', title: '商品状态', width: 80
+				      ,templet: function(d){
+				        if(d.status=="1"){
+				        	return "上架";
+				        }else if(d.status=="0"){
+				        	return "下架";
+				        }else{
+				        	return "未定义";
+				        }
+				      }
+				    }
+			      ,{fixed: 'right', width:150, align:'center', toolbar: '#barDemo'}
+			    ]]
+		  		,limit:10
+		  		,limits:[10,20,30,40,50]
+		  		,parseData: function(res){ //res 即为原始返回的数据
+				    return {
+				      "code": res.code, //解析接口状态
+				      "msg": res.msg, //解析提示文本
+				      "count": res.count, //解析数据长度
+				      "data": res.data //解析数据列表
+				    };
+				  }
+				  ,response: {
+				    statusName: 'code' //规定数据状态的字段名称，默认：code
+				    ,statusCode: 200 //规定成功的状态码，默认：0
+				    ,msgName: 'msg' //规定状态信息的字段名称，默认：msg
+				    ,countName: 'count' //规定数据总数的字段名称，默认：count
+				    ,dataName: 'data' //规定数据列表的字段名称，默认：data
+				  } 
+			  });
+		  	}
+  	});
+  
+</script>
+</html>
