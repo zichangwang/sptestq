@@ -11,6 +11,7 @@ public class SpTestApplication extends SpringBootServletInitializer {
 	protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {
 		return builder.sources(new Class[] { getClass() });
 	}
+	
 
 	
 	public static void main(String[] args) {
